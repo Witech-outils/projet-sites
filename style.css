@@ -11,93 +11,45 @@
 /* Style général */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: var(--witech-bg);
-    color: var(--dark-text);
+    margin: 0; padding: 0; background-color: var(--witech-bg); color: var(--dark-text);
 }
-
 header, footer {
-    text-align: center;
-    padding: 2em;
-    background-color: var(--witech-purple);
-    color: white;
+    text-align: center; padding: 2em; background-color: var(--witech-purple); color: white;
 }
+header h1 { margin: 0; }
 
-header h1 {
-    margin: 0;
-}
-
-/* Style pour les sections de session */
-.session-section {
-    margin-bottom: 3em;
-}
+/* Sections par session */
+.session-section { margin-bottom: 3em; }
 .session-title {
-    font-size: 2em;
-    text-align: center;
-    margin: 1.5em 0;
-    padding-bottom: 0.5em;
-    border-bottom: 3px solid var(--witech-yellow); /* Accent jaune */
-    color: var(--dark-text);
+    font-size: 2em; text-align: center; margin: 1.5em 0; padding-bottom: 0.5em;
+    border-bottom: 3px solid var(--witech-yellow); color: var(--dark-text);
 }
 
-/* Grille pour les projets */
+/* Grille des projets */
 .project-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 2em;
-    padding: 0 2em;
-    max-width: 1200px;
-    margin: 0 auto;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2em; padding: 0 2em; max-width: 1200px; margin: 0 auto;
 }
-.loading-message {
-    text-align: center;
-    font-style: italic;
-    color: #777;
-    padding: 2em;
-}
+.loading-message { text-align: center; font-style: italic; color: #777; padding: 2em; }
 
-/* Style des cartes de projet */
+/* Cartes de projet */
 .project-card {
-    background-color: var(--witech-white);
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    overflow: hidden;
+    background-color: var(--witech-white); border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); overflow: hidden;
     transition: transform 0.2s, box-shadow 0.2s;
-    display: flex;
-    flex-direction: column;
-    text-align: center;
+    display: flex; flex-direction: column; text-align: center;
 }
-.project-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-}
+.project-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.15); }
 .project-card h2 {
-    margin: 0;
-    padding: 1em;
-    background-color: var(--witech-purple); /* Titre de carte en violet */
-    color: white;
-    font-size: 1.2em;
+    margin: 0; padding: 1em; background-color: var(--witech-purple);
+    color: white; font-size: 1.2em;
 }
-
-/* Section pour une future description, remplace le QR code */
 .project-description {
-    padding: 1.5em;
-    flex-grow: 1; /* Permet au lien de rester en bas */
-    color: #555;
-    font-size: 0.95em;
+    padding: 1.5em; flex-grow: 1; color: #555; font-size: 0.95em;
 }
-
 .project-card .project-link {
-    margin-top: auto;
-    padding: 1em;
-    background-color: var(--witech-purple-medium); /* Bouton en violet moyen */
-    text-decoration: none;
-    color: white;
-    font-weight: bold;
-    display: block;
+    margin-top: auto; padding: 1em; background-color: var(--witech-purple-medium);
+    text-decoration: none; color: white; font-weight: bold; display: block;
     transition: background-color 0.2s;
 }
-.project-card .project-link:hover {
-    background-color: var(--witech-purple); /* Survol en violet foncé */
-}
+.project-card .project-link:hover { background-color: var(--witech-purple); }
