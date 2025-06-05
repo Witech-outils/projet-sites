@@ -1,0 +1,84 @@
+/* Style général */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+    color: #333;
+}
+
+header, footer {
+    text-align: center;
+    padding: 2em;
+    background-color: #333;
+    color: white;
+}
+
+header h1 {
+    margin: 0;
+}
+
+/* Grille pour les projets */
+#project-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2em;
+    padding: 2em;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.loading-message {
+    grid-column: 1 / -1; /* Prend toute la largeur */
+    text-align: center;
+    font-style: italic;
+    color: #777;
+}
+
+/* Style des cartes de projet */
+.project-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.project-card:hover {
+    transform: translateY(-5px);
+}
+
+.project-card h2 {
+    margin: 0;
+    padding: 1em;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 1.2em;
+}
+
+.project-card .qr-code {
+    padding: 1em;
+}
+
+.project-card .qr-code img {
+    max-width: 80%;
+    height: auto;
+    border: 1px solid #eee;
+}
+
+.project-card .project-link {
+    margin-top: auto; /* Pousse le lien en bas */
+    padding: 1em;
+    background-color: #f1f1f1;
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+    display: block;
+}
+
+.project-card .project-link:hover {
+    background-color: #ddd;
+}
