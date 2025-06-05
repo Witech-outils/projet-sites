@@ -1,66 +1,59 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const owner = 'Witech-outils';
     const repo = 'projet-sites';
-    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/`;
-    const siteUrlBase = `https://${owner}.github.io/${repo}/`;
+    const siteUrlBase = `https://<span class="math-inline">\{owner\}\.github\.io/</span>{repo}/`;
+    const apiBaseUrl = `https://api.github.com/repos/<span class="math-inline">\{owner\}/</span>{repo}/contents/`;
 
-    const projectListContainer = document.getElementById('project-list');
-    const loadingMessage = document.querySelector('.loading-message');
+    const mainContainer = document.getElementById('project-list');
+    mainContainer.innerHTML = '<p class="loading-message">Chargement des sessions depuis GitHub...</p>';
 
-    // Dossiers à ignorer
-    const foldersToIgnore = ['qrcodes', '.git'];
+    const rootFoldersToIgnore = ['qrcodes', '.git'];
 
-    fetch(apiUrl)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Erreur réseau ou le dépôt est introuvable.');
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Filtre pour ne garder que les dossiers qui ne sont pas dans la liste d'ignorés
-            const projectFolders = data.filter(item => 
-                item.type === 'dir' && !foldersToIgnore.includes(item.name)
-            );
+    try {
+        const rootResponse = await fetch(apiBaseUrl);
+        const rootItems = await rootResponse.json();
 
-            if (projectFolders.length === 0) {
-                 loadingMessage.textContent = "Aucun projet trouvé. Ajoutez un dossier de projet et un QR code correspondant.";
-                 return;
-            }
+        let sessionFolders = rootItems.filter(item => 
+            item.type === 'dir' && !rootFoldersToIgnore.includes(item.name)
+        );
+        
+        sessionFolders.sort((a, b) => b.name.localeCompare(a.name));
+
+        if (sessionFolders.length === 0) {
+            mainContainer.innerHTML = '<p class="loading-message">Aucune session de projets trouvée.</p>';
+            return;
+        }
+
+        mainContainer.innerHTML = ''; 
+
+        for (const session of sessionFolders) {
+            const sessionName = session.name;
+
+            const sessionSection = document.createElement('section');
+            sessionSection.className = 'session-section';
+
+            const sessionTitle = document.createElement('h2');
+            sessionTitle.className = 'session-title';
+            sessionTitle.textContent = `Session ${sessionName}`;
             
-            // On vide le message de chargement
-            projectListContainer.innerHTML = ''; 
+            const projectGrid = document.createElement('div');
+            projectGrid.className = 'project-grid';
 
-            // On trie les projets par ordre alphabétique
-            projectFolders.sort((a, b) => a.name.localeCompare(b.name));
-            
-            projectFolders.forEach(folder => {
-                const projectName = folder.name;
-                const projectUrl = `${siteUrlBase}${projectName}/`;
-                const qrCodeUrl = `qrcodes/qrcode-${projectName}.png`;
+            sessionSection.appendChild(sessionTitle);
+            sessionSection.appendChild(projectGrid);
+            mainContainer.appendChild(sessionSection);
 
-                // Création de la carte du projet
-                const card = document.createElement('div');
-                card.className = 'project-card';
+            const projectsResponse = await fetch(apiBaseUrl + sessionName);
+            const projectItems = await projectsResponse.json();
 
-                card.innerHTML = `
-                    <h2>${projectName.replace(/-/g, ' ')}</h2>
-                    <div class="qr-code">
-                        <a href="${projectUrl}" target="_blank">
-                            <img src="${qrCodeUrl}" alt="QR Code pour ${projectName}">
-                        </a>
-                    </div>
-                    <a href="${projectUrl}" class="project-link" target="_blank">
-                        Visiter le site
-                    </a>
-                `;
-                
-                projectListContainer.appendChild(card);
-            });
+            const projects = projectItems.filter(item => item.type === 'dir');
+            projects.sort((a, b) => a.name.localeCompare(b.name));
 
-        })
-        .catch(error => {
-            console.error('Erreur lors de la récupération des projets:', error);
-            loadingMessage.textContent = "Impossible de charger les projets. Vérifiez la console pour plus de détails.";
-        });
-});
+            if (projects.length === 0) {
+                projectGrid.innerHTML = '<p>Aucun projet dans cette session.</p>';
+            } else {
+                projects.forEach(project => {
+                    const projectName = project.name;
+                    const projectUrl = `<span class="math-inline">\{siteUrlBase\}</span>{sessionName}/${projectName}/`;
+                    
+                    const
