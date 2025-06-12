@@ -37,7 +37,7 @@ header h1 {
     text-align: center;
     margin: 1.5em 0;
     padding-bottom: 0.5em;
-    border-bottom: 3px solid var(--witech-yellow); /* Accent jaune */
+    border-bottom: 3px solid var(--witech-yellow);
     color: var(--dark-text);
 }
 
@@ -49,7 +49,6 @@ header h1 {
     padding: 0 2em;
     max-width: 1200px;
     margin: 0 auto;
-
     /* Espace en bas pour ne pas être caché par le footer fixe */
     padding-bottom: 7em; 
 }
@@ -79,15 +78,14 @@ header h1 {
 .project-card h2 {
     margin: 0;
     padding: 1em;
-    background-color: var(--witech-purple); /* Titre de carte en violet */
+    background-color: var(--witech-purple);
     color: white;
     font-size: 1.2em;
 }
 
-/* Section pour la description du projet */
 .project-description {
     padding: 1.5em;
-    flex-grow: 1; /* Permet au lien de rester en bas */
+    flex-grow: 1;
     color: #555;
     font-size: 0.95em;
 }
@@ -95,7 +93,7 @@ header h1 {
 .project-card .project-link {
     margin-top: auto;
     padding: 1em;
-    background-color: var(--witech-purple-medium); /* Bouton en violet moyen */
+    background-color: var(--witech-purple-medium);
     text-decoration: none;
     color: white;
     font-weight: bold;
@@ -103,7 +101,7 @@ header h1 {
     transition: background-color 0.2s;
 }
 .project-card .project-link:hover {
-    background-color: var(--witech-purple); /* Survol en violet foncé */
+    background-color: var(--witech-purple);
 }
 
 /* Pied de page */
@@ -112,11 +110,10 @@ footer {
     padding: 2em;
     background-color: var(--witech-purple);
     color: white;
-
     /* --- Fixation en bas de l'écran --- */
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    z-index: 1000; /* S'assure qu'il reste au-dessus de tout */
+    z-index: 1000;
 }
