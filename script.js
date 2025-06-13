@@ -6,17 +6,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const apiBaseUrl = `https://api.github.com/repos/${owner}/${repo}`;
     const mainContainer = document.getElementById('project-list');
 
-    // --- NOUVELLE PARTIE : GESTION DES PARAMÈTRES URL ---
+    // --- GESTION DES PARAMÈTRES URL ---
     const urlParams = new URLSearchParams(window.location.search);
     const personName = urlParams.get('name');
     const projectFilter = urlParams.get('projects');
 
     // --- LOGIQUE PRINCIPALE ---
-    // Si des paramètres 'name' et 'projects' sont présents dans l'URL, on active le mode filtré.
+    // Si des paramètres sont présents, on active le mode filtré.
     if (personName && projectFilter) {
         displayFilteredProjects();
     } else {
-        // Sinon, on affiche la vue par défaut avec toutes les sessions.
+        // Sinon, on affiche la vue par défaut.
         displayAllProjectsBySession();
     }
 
@@ -31,93 +31,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         mainContainer.innerHTML = '<p class="loading-message">Chargement des projets sélectionnés...</p>';
 
         try {
-            // On récupère la liste de TOUS les projets pour avoir leurs infos
             const allProjects = await fetchAllProjects();
-            
-            // On transforme la liste de noms de l'URL en un tableau
             const projectsToShowNames = projectFilter.split(',');
-
+            
             // On ne garde que les projets dont le nom est dans notre liste de l'URL
             const filteredProjects = allProjects.filter(project => projectsToShowNames.includes(project.name));
-
-            mainContainer.innerHTML = ''; // On vide le conteneur
-
-            // On crée une seule grille pour les projets filtrés
-            const projectGrid = document.createElement('div');
-            projectGrid.className = 'project-grid';
-            mainContainer.appendChild(projectGrid);
-
-            if (filteredProjects.length === 0) {
-                projectGrid.innerHTML = '<p>Aucun des projets spécifiés n\'a été trouvé.</p>';
-                return;
-            }
-
-            // On affiche chaque projet filtré
-            filteredProjects.forEach(project => {
-                const card = createProjectCard(project);
-                projectGrid.appendChild(card);
-            });
+            
+            // MODIFICATION : On regroupe les projets filtrés par session, comme pour la vue normale
+            const sessions = groupProjectsBySession(filteredProjects);
+            
+            // On utilise la même fonction d'affichage que la vue normale
+            renderSessions(sessions);
 
         } catch (error) {
             handleError(error);
         }
     }
 
-    // --- FONCTION POUR LA VUE PAR DÉFAUT (par session) ---
+    // --- FONCTION POUR LA VUE PAR DÉFAUT ---
     async function displayAllProjectsBySession() {
         mainContainer.innerHTML = '<p class="loading-message">Analyse de l\'historique des projets depuis GitHub...</p>';
         try {
             const allProjects = await fetchAllProjects();
-            
-            // On groupe les projets par session en utilisant leur date de création
-            const sessions = {};
-            allProjects.forEach(project => {
-                const sessionName = getAcademicSession(project.creationDate);
-                if (!sessions[sessionName]) {
-                    sessions[sessionName] = [];
-                }
-                sessions[sessionName].push(project);
-            });
-            
-            mainContainer.innerHTML = '';
-            const sortedSessionNames = Object.keys(sessions).sort().reverse();
-
-            if (sortedSessionNames.length === 0) {
-                 mainContainer.innerHTML = "<p class='loading-message'>Aucun projet trouvé.</p>";
-                 return;
-            }
-
-            sortedSessionNames.forEach(sessionName => {
-                const sessionSection = document.createElement('section');
-                sessionSection.className = 'session-section';
-                const sessionTitle = document.createElement('h2');
-                sessionTitle.className = 'session-title';
-                sessionTitle.textContent = `Session ${sessionName}`;
-                const projectGrid = document.createElement('div');
-                projectGrid.className = 'project-grid';
-
-                sessionSection.appendChild(sessionTitle);
-                sessionSection.appendChild(projectGrid);
-                mainContainer.appendChild(sessionSection);
-
-                const projectsInSession = sessions[sessionName].sort((a,b) => a.name.localeCompare(b.name));
-                projectsInSession.forEach(project => {
-                    const card = createProjectCard(project);
-                    projectGrid.appendChild(card);
-                });
-            });
+            const sessions = groupProjectsBySession(allProjects);
+            renderSessions(sessions);
         } catch(error) {
             handleError(error);
         }
     }
 
-    // --- FONCTIONS UTILITAIRES (Aident les fonctions principales) ---
+    // --- FONCTIONS UTILITAIRES ---
 
     // Récupère la liste de tous les projets avec leur date de création
     async function fetchAllProjects() {
         const contentsResponse = await fetch(`${apiBaseUrl}/contents`);
         const contents = await contentsResponse.json();
-        const rootFoldersToIgnore = ['.git'];
+        const rootFoldersToIgnore = ['.git', 'qrcodes'];
 
         const projectFolders = contents.filter(item => 
             item.type === 'dir' && !rootFoldersToIgnore.includes(item.name)
@@ -132,6 +81,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         return Promise.all(projectsWithDatesPromises);
+    }
+    
+    // NOUVEAU : Regroupe une liste de projets donnée dans un objet de sessions
+    function groupProjectsBySession(projects) {
+        const sessions = {};
+        projects.forEach(project => {
+            const sessionName = getAcademicSession(project.creationDate);
+            if (!sessions[sessionName]) {
+                sessions[sessionName] = [];
+            }
+            sessions[sessionName].push(project);
+        });
+        return sessions;
+    }
+
+    // NOUVEAU : Affiche les projets à partir d'un objet de sessions
+    function renderSessions(sessions) {
+        mainContainer.innerHTML = '';
+        const sortedSessionNames = Object.keys(sessions).sort().reverse();
+
+        if (sortedSessionNames.length === 0) {
+             mainContainer.innerHTML = "<p class='loading-message'>Aucun projet à afficher.</p>";
+             return;
+        }
+
+        sortedSessionNames.forEach(sessionName => {
+            const sessionSection = document.createElement('section');
+            sessionSection.className = 'session-section';
+            const sessionTitle = document.createElement('h2');
+            sessionTitle.className = 'session-title';
+            sessionTitle.textContent = `Session ${sessionName}`;
+            const projectGrid = document.createElement('div');
+            projectGrid.className = 'project-grid';
+
+            sessionSection.appendChild(sessionTitle);
+            sessionSection.appendChild(projectGrid);
+            mainContainer.appendChild(sessionSection);
+
+            const projectsInSession = sessions[sessionName].sort((a,b) => a.name.localeCompare(b.name));
+            projectsInSession.forEach(project => {
+                const card = createProjectCard(project);
+                projectGrid.appendChild(card);
+            });
+        });
     }
 
     // Crée le HTML pour une carte de projet
