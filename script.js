@@ -3,7 +3,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const owner = 'Witech-outils';
     const repo = 'projet-sites';
     const siteUrlBase = `https://${owner}.github.io/${repo}/`;
-    const apiBaseUrl = `https://api.github.com/repos/${owner}/${repo}`; // Cette variable n'est plus utilisée pour récupérer les dates, mais peut l'être pour d'autres usages futurs.
+    // Cette variable n'est plus utilisée pour récupérer les dates, mais peut l'être pour d'autres usages futurs.
+    const apiBaseUrl = `https://api.github.com/repos/${owner}/${repo}`; 
     const mainContainer = document.getElementById('project-list');
     
     // Chemin vers votre fichier de données de projets
@@ -59,7 +60,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- FONCTIONS UTILITAIRES ---
 
-    // Récupère la liste de tous les projets avec leur date de publication (maintenant nommée creationDate) depuis un fichier JSON
+    /**
+     * Récupère la liste de tous les projets depuis un fichier JSON.
+     * Transforme la `publicationDate` en un objet Date JavaScript.
+     */
     async function fetchAllProjects() {
         try {
             const response = await fetch(projectsDataFile);
@@ -71,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Transforme les dates string en objets Date
             return projectsData.map(project => ({
                 name: project.name,
-                creationDate: new Date(project.publicationDate) // Utilise publicationDate du JSON, mais le nomme creationDate ici
+                creationDate: new Date(project.publicationDate) // Utilise publicationDate du JSON
             }));
         } catch (error) {
             console.error('Erreur lors du chargement des données des projets:', error);
@@ -79,44 +83,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // Regroupe une liste de projets donnée dans un objet de sessions
+    /**
+     * Regroupe une liste de projets donnée dans un objet de sessions.
+     */
     function groupProjectsBySession(projects) {
         const sessions = {};
         projects.forEach(project => {
             // S'assurer que la date est valide
-            if (project.creationDate && !isNaN(project.creationDate)) {
+            if (project.creationDate && !isNaN(project.creationDate.getTime())) {
                 const sessionName = getAcademicSession(project.creationDate);
                 if (!sessions[sessionName]) {
                     sessions[sessionName] = [];
                 }
                 sessions[sessionName].push(project);
             } else {
-                console.warn(`Projet ${project.name} a une date de création invalide et sera ignoré pour le regroupement par session.`);
+                console.warn(`Projet "${project.name}" a une date de création invalide et sera ignoré pour le regroupement par session.`);
             }
         });
         return sessions;
     }
 
-    // Affiche les projets à partir d'un objet de sessions
+    /**
+     * Affiche les projets à l'écran, groupés par sections de session.
+     */
     function renderSessions(sessions) {
         mainContainer.innerHTML = '';
         const sortedSessionNames = Object.keys(sessions).sort((a, b) => {
             const yearA = parseInt(a.split('-')[0]);
             const yearB = parseInt(b.split('-')[0]);
-            return yearB - yearA;
+            return yearB - yearA; // Tri anti-chronologique (ex: 2025-2026 avant 2024-2025)
         });
 
         if (sortedSessionNames.length === 0) {
-             mainContainer.innerHTML = "<p class='loading-message'>Aucun projet à afficher.</p>";
-             return;
+            mainContainer.innerHTML = "<p class='loading-message'>Aucun projet à afficher.</p>";
+            return;
         }
 
         sortedSessionNames.forEach(sessionName => {
             const sessionSection = document.createElement('section');
             sessionSection.className = 'session-section';
+            
             const sessionTitle = document.createElement('h2');
             sessionTitle.className = 'session-title';
             sessionTitle.textContent = `Session ${sessionName}`;
+            
             const projectGrid = document.createElement('div');
             projectGrid.className = 'project-grid';
 
@@ -132,7 +142,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Crée le HTML pour une carte de projet
+    /**
+     * Crée et retourne l'élément HTML pour une carte de projet.
+     */
     function createProjectCard(project) {
         const projectUrl = `${siteUrlBase}${project.name}/`;
         const card = document.createElement('div');
@@ -149,16 +161,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         return card;
     }
 
-    // Calcule l'année scolaire à partir d'une date
+    /**
+     * Calcule la session académique (ex: "2024-2025") à partir d'une date.
+     * L'année scolaire commence en septembre.
+     */
     function getAcademicSession(date) {
         const year = date.getFullYear();
         const month = date.getMonth(); // 0 = Janvier, 8 = Septembre
         return month >= 8 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
     }
 
-    // Gère les erreurs d'affichage
+    /**
+     * Gère les erreurs en affichant un message à l'utilisateur.
+     */
     function handleError(error) {
         console.error('Erreur lors de la construction de la page:', error);
-        mainContainer.innerHTML = `<p class="loading-message">Impossible de charger les projets. ${error.message || 'Une erreur inconnue est survenue.'}</p>`;
+        mainContainer.innerHTML = `<p class="error-message">Impossible de charger les projets. ${error.message || 'Une erreur inconnue est survenue.'}</p>`;
     }
 });
