@@ -20,7 +20,7 @@ body {
 header {
     text-align: center;
     padding: 2em;
-    background-color: var(--witech-purple);
+    background-color: var(--witech-purple-medium);
     color: white;
 }
 
