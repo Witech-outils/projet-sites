@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const siteUrlBase = `https://${owner}.github.io/${repo}/`;
     const apiBaseUrl = `https://api.github.com/repos/${owner}/${repo}`;
     const mainContainer = document.getElementById('project-list');
+    
+    // NOUVEAU : Chemin vers votre fichier de données de projets
+    const projectsDataFile = `${siteUrlBase}projects_data.json`; // Assurez-vous que ce chemin est correct
 
     // --- GESTION DES PARAMÈTRES URL ---
     const urlParams = new URLSearchParams(window.location.search);
@@ -12,17 +15,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const projectFilter = urlParams.get('projects');
 
     // --- LOGIQUE PRINCIPALE ---
-    // Si des paramètres sont présents, on active le mode filtré.
     if (personName && projectFilter) {
         displayFilteredProjects();
     } else {
-        // Sinon, on affiche la vue par défaut.
         displayAllProjectsBySession();
     }
 
     // --- FONCTION POUR LA VUE FILTRÉE ---
     async function displayFilteredProjects() {
-        // Personnalise le titre de la page
         const headerTitle = document.querySelector('header h1');
         const headerParagraph = document.querySelector('header p');
         headerTitle.textContent = `Portfolio de ${personName}`;
@@ -37,10 +37,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             // On ne garde que les projets dont le nom est dans notre liste de l'URL
             const filteredProjects = allProjects.filter(project => projectsToShowNames.includes(project.name));
             
-            // MODIFICATION : On regroupe les projets filtrés par session, comme pour la vue normale
             const sessions = groupProjectsBySession(filteredProjects);
             
-            // On utilise la même fonction d'affichage que la vue normale
             renderSessions(sessions);
 
         } catch (error) {
@@ -50,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- FONCTION POUR LA VUE PAR DÉFAUT ---
     async function displayAllProjectsBySession() {
-        mainContainer.innerHTML = '<p class="loading-message">Analyse de l\'historique des projets depuis GitHub...</p>';
+        mainContainer.innerHTML = '<p class="loading-message">Chargement des projets...</p>'; // Texte mis à jour
         try {
             const allProjects = await fetchAllProjects();
             const sessions = groupProjectsBySession(allProjects);
@@ -62,36 +60,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- FONCTIONS UTILITAIRES ---
 
-    // Récupère la liste de tous les projets avec leur date de création
+    // Récupère la liste de tous les projets avec leur date de publication depuis un fichier JSON
     async function fetchAllProjects() {
-        const contentsResponse = await fetch(`${apiBaseUrl}/contents`);
-        const contents = await contentsResponse.json();
-        const rootFoldersToIgnore = ['.git', 'qrcodes'];
+        try {
+            const response = await fetch(projectsDataFile);
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+            const projectsData = await response.json();
 
-        const projectFolders = contents.filter(item => 
-            item.type === 'dir' && !rootFoldersToIgnore.includes(item.name)
-        );
-
-        const projectsWithDatesPromises = projectFolders.map(async (folder) => {
-            const commitsResponse = await fetch(`${apiBaseUrl}/commits?path=${folder.path}`);
-            const commits = await commitsResponse.json();
-            const firstCommit = commits[commits.length - 1];
-            const creationDate = new Date(firstCommit.commit.author.date);
-            return { name: folder.name, creationDate: creationDate };
-        });
-
-        return Promise.all(projectsWithDatesPromises);
+            // Transforme les dates string en objets Date pour une manipulation facile
+            return projectsData.map(project => ({
+                name: project.name,
+                publicationDate: new Date(project.publicationDate) // Convertit la string en objet Date
+            }));
+        } catch (error) {
+            console.error('Erreur lors du chargement des données des projets:', error);
+            // Si le fichier JSON est introuvable ou mal formaté, on peut essayer de fallback sur GitHub API
+            // ou simplement lancer l'erreur pour afficher un message à l'utilisateur.
+            // Pour ce cas, nous allons juste relancer l'erreur.
+            throw new Error('Impossible de charger les données des projets. Vérifiez le fichier projects_data.json.');
+        }
     }
     
     // NOUVEAU : Regroupe une liste de projets donnée dans un objet de sessions
     function groupProjectsBySession(projects) {
         const sessions = {};
         projects.forEach(project => {
-            const sessionName = getAcademicSession(project.creationDate);
-            if (!sessions[sessionName]) {
-                sessions[sessionName] = [];
+            // S'assurer que la date de publication est valide avant de l'utiliser
+            if (project.publicationDate && !isNaN(project.publicationDate)) {
+                const sessionName = getAcademicSession(project.publicationDate);
+                if (!sessions[sessionName]) {
+                    sessions[sessionName] = [];
+                }
+                sessions[sessionName].push(project);
+            } else {
+                console.warn(`Projet ${project.name} a une date de publication invalide et sera ignoré pour le regroupement par session.`);
             }
-            sessions[sessionName].push(project);
         });
         return sessions;
     }
@@ -99,7 +104,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // NOUVEAU : Affiche les projets à partir d'un objet de sessions
     function renderSessions(sessions) {
         mainContainer.innerHTML = '';
-        const sortedSessionNames = Object.keys(sessions).sort().reverse();
+        // Trie les sessions par ordre décroissant (plus récentes en premier)
+        const sortedSessionNames = Object.keys(sessions).sort((a, b) => {
+            // Supposons que les noms de session sont au format "YYYY-YYYY"
+            const yearA = parseInt(a.split('-')[0]);
+            const yearB = parseInt(b.split('-')[0]);
+            return yearB - yearA;
+        });
 
         if (sortedSessionNames.length === 0) {
              mainContainer.innerHTML = "<p class='loading-message'>Aucun projet à afficher.</p>";
@@ -119,6 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             sessionSection.appendChild(projectGrid);
             mainContainer.appendChild(sessionSection);
 
+            // Trie les projets par nom à l'intérieur de chaque session
             const projectsInSession = sessions[sessionName].sort((a,b) => a.name.localeCompare(b.name));
             projectsInSession.forEach(project => {
                 const card = createProjectCard(project);
@@ -135,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.innerHTML = `
             <h2>${project.name.replace(/-/g, ' ')}</h2>
             <div class="project-description">
-                <p>Projet créé le ${project.creationDate.toLocaleDateString('fr-FR')}</p>
+                <p>Publié le ${project.publicationDate ? project.publicationDate.toLocaleDateString('fr-FR') : 'Date inconnue'}</p>
             </div>
             <a href="${projectUrl}" class="project-link" target="_blank">
                 Visiter le site
@@ -154,6 +166,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Gère les erreurs d'affichage
     function handleError(error) {
         console.error('Erreur lors de la construction de la page:', error);
-        mainContainer.innerHTML = '<p class="loading-message">Impossible de charger les projets. L\'API de GitHub a peut-être atteint sa limite. Réessayez dans quelques minutes.</p>';
+        mainContainer.innerHTML = `<p class="loading-message">Impossible de charger les projets. ${error.message || 'Une erreur inconnue est survenue.'}</p>`;
     }
 });
