@@ -107,13 +107,17 @@ header h1 {
 /* Pied de page */
 footer {
     text-align: center;
-    padding: 2em;
+    padding: 2em; /* Le padding de base est conservé */
+    /* On ajoute un padding à droite pour compenser la largeur d'une scrollbar (~17px) */
+    /* La fonction calc() permet de l'ajouter au padding existant */
+    padding-right: calc(2em + 17px);
     background-color: var(--witech-purple);
     color: white;
-    /* --- Fixation en bas de l'écran --- */
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
     z-index: 1000;
+    /* Indispensable pour que le padding soit inclus dans la largeur totale (width: 100%) */
+    box-sizing: border-box;
 }
